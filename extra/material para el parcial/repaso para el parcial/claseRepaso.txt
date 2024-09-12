@@ -1,0 +1,143 @@
+#Resueltos enlas clases(ambos turnos)
+
+#Factorial, version 1
+
+.text: 	  #Comienza la sección de código
+           addi a0,zero,3  # vamos a calcular factorial(3)
+           j factorial
+factorial:  beq a0 , zero , fin
+			addi sp , sp ,  -16
+			sw a0, 0(sp) 		# a0 guarda valor de n en la direccion 0(sp)
+			sw ra, 4(sp) 		# guarda el contenido de ra en la direccion 4(sp)
+			addi a0, a0, -1 	# a0 <- a0-1
+            jal factorial       # jump a factorial con el nuevo a0
+			lw a0, 0(sp)
+			mul a0, a0,a1
+			lw ra , 4(sp)
+			addi sp, sp , 16
+			jr ra
+fin: 		addi a0, zero, 1
+			jr ra
+
+---------------------------------------------------------------------
+#Copiar un array en otro
+
+# sea dos arrays s y q tal que las direcciones de inicio vienen en
+# a0 y a1 correspondientemente, tambien un size que indica el tamanio
+# de los vectores que viene en a2
+# quiero copiar la informacion de q a s
+
+.text:			#Comienza la sección de código
+
+
+copiar_arreglos:
+				# a0 = int s[], a1 = int q[],   a2 = int largo,
+				la a0, input_array1
+				la a1, input_array2
+				la a2, array_length
+				li t0, 0
+				addi  a2, a2, -1
+
+		ciclo:  # Comienzo de ciclo
+				bge   zero, a2, fin   # Si i >= largo, sale del ciclo
+				lw t0, 0(a1)    # De-referencia la dir,
+				sw t0, 0(a0)
+				addi   a0, a0, 4   # Actualiza la dir. de memoria
+				addi   a1, a1, 4   # Actualiza la dir. de memoria
+				addi  a2, a2, -1    # decrementa el tamanio
+				j ciclo           # Vuelve a comenzar el ciclo
+		fin:
+				ret
+
+.data:
+.equ array_length, 4
+input_array2: .word 0x12345678  0x11111111  0x8  0x1
+input_array1: .word 0x00000000  0x00000000  0x00000000  0x00000000
+
+#---------------------------------------------
+# Dado un array de longitud length  calcular la suma de todos los elementos
+
+.text:
+la a0, numbers
+lw a1, length
+jal ra, array_sum
+
+# Imprime el resultado.
+mv a0, a0
+li a7, 1
+ecall
+
+# Frena el programa.
+li a7, 10
+ecall
+
+array_sum:
+li t0, 0 # Iterador del ciclo.
+li t1, 0 # Acumulador de la suma.
+
+while:
+bge t0, a1, return
+lw t2, 0(a0)   # Cargamos el i-ésimo elemento.
+add t1, t1, t2 # Sumamos al acumulador.
+addi a0, a0, 4 # Avanzamos al siguiento elemento.
+addi t0, t0, 1 # Incrementamos la variable de iteración.
+j while
+
+return:
+mv a0, t1
+ret
+
+.data:
+numbers: .word 1 2 3 4 5 6
+length: .word 6
+
+
+#-----------------------------------------------------
+#Factorial, version 2
+
+.text:
+#lw a0, input_addr
+li a0, 3
+jal ra, factorial
+
+# Imprime el resultado.
+mv a0, a0
+li a7, 1
+ecall
+
+# Frena el programa.
+li a7, 93
+ecall
+
+factorial:
+# Prologo
+# Me hago lugar en el stack y preservo la convención.
+# Hay que guardar: ra (return address), y el a0 (n).
+addi sp, sp, -8
+sw ra, 4(sp)
+sw a0, 0(sp)
+
+# Case base
+bgt a0, zero, recursivo
+li a0, 1
+j epilogo
+
+# Caso recursivo
+recursivo:
+addi a0, a0, -1
+jal ra, factorial
+lw t0, 0(sp) # Restauro el a0 original que me llegó.
+mul a0, a0, t0 # Ojo que no vale usar mul!!
+
+epilogo:
+# Devuelve el lugar del stack que me agarré,
+# restauro los registros saved y retorno.
+lw ra, 4(sp)
+addi sp, sp, 8
+ret
+
+
+.data:
+input_addr: .word 0x00000003
+
+#
